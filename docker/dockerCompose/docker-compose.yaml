@@ -1,0 +1,51 @@
+---
+version: "3.8"
+
+services:
+ database:
+  image: cmendoza3/demo-postgres:latest
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_DB: postgres
+    PGDATA: /var/lib/postgresql/data/pgdata
+  secrets:
+   - ig_password
+   - postgres_passwd
+  deploy:
+    mode: "replicated"
+    replicas: 1
+    placement:
+     constraints:
+      - node.labels.database==yes
+  volumes:
+   - "testMount:/var/lib/postgresql/data"
+ web:
+  image: cmendoza3/image_gallery:latest
+  environment:
+   PG_HOST: "database"
+   PG_PORT: "5432"
+   IG_USER: "image_gallery"
+   IG_DATABASE: "image_gallery"
+   IG_PASSWD_FILE: "/run/secrets/ig_password"
+   S3_IMAGE_BUCKET: "edu.au.cc.image-gallery-con"
+   AWS_ACCESS_KEY_ID: "AKIAS3IXX7ONQSBACBEW"
+   AWS_SECRET_ACCESS_KEY: "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"
+   AWS_DEFAULT_REGION: "us-east-1"
+  deploy:
+    mode: global
+  secrets:
+   - ig_password
+  ports:
+    - "8888:5000"
+  depends_on:
+   - "database"
+
+volumes:
+ testMount:
+   external: true
+
+secrets:
+ ig_password:
+  external: true
+ postgres_passwd:
+  external: true
